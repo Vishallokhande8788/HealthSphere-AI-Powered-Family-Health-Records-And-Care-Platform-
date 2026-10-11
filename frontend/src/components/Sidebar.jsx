@@ -1,41 +1,14 @@
 function Sidebar({ currentPage, onNavigate, onLogout }) {
-  const menuItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: "🏠",
-    },
-    {
-      id: "family",
-      label: "Family Members",
-      icon: "👨‍👩‍👧",
-    },
-    { 
-      id: "doctors", 
-      label: "Doctors", 
-      icon: "👨‍⚕️" 
-    },
-    {
-      id: "medicines",
-      label: "Medicines",
-      icon: "💊",
-    },
-    {
-      id: "health",
-      label: "Health Records",
-      icon: "❤️",
-    },
-    {
-      id: "documents",
-      label: "Documents",
-      icon: "📄",
-    },
-    {
-      id: "ai",
-      label: "AI Assistant",
-      icon: "🤖",
-    },
-  ];
+ const menuItems = [
+  { id: "dashboard", label: "Dashboard", icon: "🏠" },
+  { id: "family", label: "Family Members", icon: "👨‍👩‍👧" },
+  { id: "doctors", label: "Doctors", icon: "👨‍⚕️" },
+  { id: "history", label: "Medical History", icon: "🩺" },
+  { id: "medicines", label: "Medicines", icon: "💊" },
+  { id: "health", label: "Health Records", icon: "❤️" },
+  { id: "documents", label: "Documents", icon: "📄" },
+  { id: "ai", label: "AI Assistant", icon: "🤖" },
+];
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
