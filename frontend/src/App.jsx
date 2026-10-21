@@ -10,21 +10,22 @@ import Medicines from "./pages/Medicines";
 import MedicalDocuments from "./pages/MedicalDocuments";
 import Doctors from "./pages/Doctors";
 import MedicalHistory from "./pages/MedicalHistory";
+import AIAssistant from "./pages/AIAssistant";
 
 import Sidebar from "./components/Sidebar";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(
-    () => Boolean(localStorage.getItem("access"))
+  const [loggedIn, setLoggedIn] = useState(() =>
+    Boolean(localStorage.getItem("access")),
   );
 
   const [username, setUsername] = useState(
-    () => localStorage.getItem("username") || ""
+    () => localStorage.getItem("username") || "",
   );
 
   const [currentPage, setCurrentPage] = useState("dashboard");
 
-  // Restore the authentication token when the app starts.
+  // Restore authentication token when the app starts.
   useEffect(() => {
     const token = localStorage.getItem("access");
 
@@ -63,21 +64,16 @@ function App() {
     setCurrentPage("dashboard");
   };
 
-  // Display the login page when the user is logged out.
+  // Show login page if not authenticated.
   if (!loggedIn) {
     return <Login onLogin={handleLogin} />;
   }
 
-  // Render the selected page.
+  // Render selected page.
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":
-        return (
-          <Dashboard
-            username={username}
-            onNavigate={setCurrentPage}
-          />
-        );
+        return <Dashboard username={username} onNavigate={setCurrentPage} />;
 
       case "family":
         return <FamilyMembers />;
@@ -101,44 +97,16 @@ function App() {
         return <MedicalDocuments />;
 
       case "ai":
-        return (
-          <div className="min-h-screen bg-slate-50 p-6 sm:p-8">
-            <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="text-4xl">🤖</div>
-
-              <h1 className="mt-4 text-2xl font-bold text-slate-900">
-                AI Health Assistant
-              </h1>
-
-              <p className="mt-3 text-slate-600">
-                Get help understanding general health information and
-                medicines. This feature is not connected yet.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage("dashboard")}
-                className="mt-6 rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white transition hover:bg-blue-700"
-              >
-                Back to Dashboard
-              </button>
-            </div>
-          </div>
-        );
+        return <AIAssistant />;
 
       default:
-        return (
-          <Dashboard
-            username={username}
-            onNavigate={setCurrentPage}
-          />
-        );
+        return <Dashboard username={username} onNavigate={setCurrentPage} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 md:flex">
-      {/* Single shared Sidebar */}
+      {/* Shared Sidebar */}
       <aside className="shrink-0">
         <Sidebar
           currentPage={currentPage}
@@ -147,10 +115,8 @@ function App() {
         />
       </aside>
 
-      {/* Main page content */}
-      <main className="min-w-0 flex-1">
-        {renderPage()}
-      </main>
+      {/* Main Page Content */}
+      <main className="min-w-0 flex-1">{renderPage()}</main>
     </div>
   );
 }

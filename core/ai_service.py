@@ -66,7 +66,7 @@ def ask_gemini(message, history=None):
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_INSTRUCTIONS,
             temperature=0.3,
-            max_output_tokens=700,
+            max_output_tokens=300,
         ),
     )
 

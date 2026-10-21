@@ -8,6 +8,7 @@ function Sidebar({ currentPage, onNavigate, onLogout }) {
   { id: "health", label: "Health Records", icon: "❤️" },
   { id: "documents", label: "Documents", icon: "📄" },
   { id: "ai", label: "AI Assistant", icon: "🤖" },
+  
 ];
 
   return (
