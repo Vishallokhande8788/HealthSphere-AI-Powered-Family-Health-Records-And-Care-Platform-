@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/family/", include("family.urls")),
     path("api/medicines/", include("medicines.urls")),
     path("api/users/", include("users.urls")),
+    path("api/ai/", include("core.ai_urls")),
 ]
 
 if settings.DEBUG:
