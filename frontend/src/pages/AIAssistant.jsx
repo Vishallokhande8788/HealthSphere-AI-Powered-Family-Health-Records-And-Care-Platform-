@@ -59,7 +59,7 @@ export default function AIAssistant() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
           },
-        }
+        },
       );
 
       setMessages((prev) => [
@@ -148,10 +148,9 @@ export default function AIAssistant() {
           })}
 
           {loading && (
-            <div className="flex justify-start">
-              <div className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm text-slate-500 shadow-sm">
-                🤖 AI is thinking...
-              </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm text-slate-500 shadow-sm">
+              🤖 Generating your answer...
+              <p className="mt-1 text-xs">This may take a few seconds.</p>
             </div>
           )}
 

@@ -61,14 +61,17 @@ def ask_gemini(message, history=None):
     )
 
     response = client.models.generate_content(
-        model="gemini-3.8-flash",
-        contents=contents,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTIONS,
-            temperature=0.3,
-            max_output_tokens=300,
+    model="gemini-3.8-flash",
+    contents=contents,
+    config=types.GenerateContentConfig(
+        system_instruction=SYSTEM_INSTRUCTIONS,
+        temperature=0.2,
+        max_output_tokens=300,
+        thinking_config=types.ThinkingConfig(
+            thinking_budget=0
         ),
-    )
+    ),
+)
 
     answer = response.text
 
