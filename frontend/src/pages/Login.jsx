@@ -11,25 +11,53 @@ function Login({ onLogin }) {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
     try {
       const response = await api.post("users/login/", {
-        username,
+        username: username.trim(),
         password,
       });
 
-      localStorage.setItem("access", response.data.access);
-      localStorage.setItem("refresh", response.data.refresh);
+      const accessToken = response.data?.access;
+      const refreshToken = response.data?.refresh;
 
+      if (!accessToken || !refreshToken) {
+        throw new Error("Login response is missing JWT tokens.");
+      }
+
+      // Store JWT tokens
+      localStorage.setItem("access", accessToken);
+      localStorage.setItem("refresh", refreshToken);
+      localStorage.setItem("username", username.trim());
+
+      // Update Axios authorization
       api.defaults.headers.common["Authorization"] =
-        `Bearer ${response.data.access}`;
+        `Bearer ${accessToken}`;
 
-      onLogin(username);
-    } catch (error) {
-      console.log(error.response?.data);
-      setError("Invalid username or password.");
+      // Open dashboard
+      onLogin(username.trim());
+
+    } catch (err) {
+      console.error("Login error:", err);
+
+      if (err.response?.status === 401) {
+        setError("Invalid username or password.");
+      } else if (err.response?.status === 404) {
+        setError("Login API not found. Please check the backend URL.");
+      } else if (err.code === "ECONNABORTED") {
+        setError("Server is taking too long. Please try again.");
+      } else if (!err.response) {
+        setError(
+          "Cannot connect to the server. Check Django and Codespaces ports."
+        );
+      } else {
+        setError("Login failed. Please try again.");
+      }
+
     } finally {
       setLoading(false);
     }
@@ -77,11 +105,9 @@ function Login({ onLogin }) {
           </div>
 
           <div className="space-y-5">
-
             <p>✓ Medicine Management</p>
             <p>♥ Family Health Records</p>
             <p>✦ AI-Assisted Insights</p>
-
           </div>
 
         </div>
@@ -103,15 +129,22 @@ function Login({ onLogin }) {
               Access your family's health dashboard.
             </p>
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form
+              onSubmit={handleLogin}
+              className="space-y-5"
+            >
 
               {/* USERNAME */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-slate-700 mb-2"
+                >
                   Username
                 </label>
 
                 <input
+                  id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -124,13 +157,17 @@ function Login({ onLogin }) {
 
               {/* PASSWORD */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-slate-700 mb-2"
+                >
                   Password
                 </label>
 
                 <div className="relative">
 
                   <input
+                    id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -153,12 +190,15 @@ function Login({ onLogin }) {
 
               {/* ERROR */}
               {error && (
-                <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+                <div
+                  role="alert"
+                  className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600"
+                >
                   {error}
                 </div>
               )}
 
-              {/* LOGIN */}
+              {/* LOGIN BUTTON */}
               <button
                 type="submit"
                 disabled={loading}
@@ -174,11 +214,8 @@ function Login({ onLogin }) {
             </p>
 
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }

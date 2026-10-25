@@ -20,33 +20,41 @@ export default function AIAssistant() {
   const [error, setError] = useState("");
 
   const bottomRef = useRef(null);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages, loading, error]);
 
   const sendMessage = async (question = input) => {
-    const text = question.trim();
+    const text = String(question || "").trim();
 
-    if (!text || loading) return;
+    if (!text || loadingRef.current) return;
 
     if (text.length > 4000) {
       setError("Message must be 4000 characters or fewer.");
       return;
     }
 
+    loadingRef.current = true;
+    setLoading(true);
     setError("");
 
-    // Exclude the initial greeting because it is not part of
-    // the actual conversation sent to Gemini.
-    const conversation = messages.slice(1);
+    // Send only the latest conversation messages.
+    // This helps reduce Gemini processing time.
+    const history = messages.slice(1).slice(-6);
 
-    // The Django endpoint accepts up to 12 history messages.
-    const history = conversation.slice(-12);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        text,
+      },
+    ]);
 
-    setMessages((prev) => [...prev, { role: "user", text }]);
     setInput("");
-    setLoading(true);
 
     try {
       const response = await api.post(
@@ -56,36 +64,54 @@ export default function AIAssistant() {
           history,
         },
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
+          timeout: 60000,
         },
       );
+
+      const answer = response.data?.answer;
+
+      if (!answer || typeof answer !== "string") {
+        throw new Error("AI returned an empty answer.");
+      }
 
       setMessages((prev) => [
         ...prev,
         {
           role: "model",
-          text: response.data.answer,
+          text: answer,
         },
       ]);
     } catch (err) {
       console.error("AI Assistant error:", err);
 
-      const message =
-        err.response?.status === 401
-          ? "Your login session has expired. Please log in again."
-          : err.response?.data?.error ||
-            "Unable to contact the AI Assistant. Please try again.";
+      let errorMessage =
+        "Unable to contact the AI Assistant. Please try again.";
 
-      setError(message);
+      if (err.response?.status === 401) {
+        errorMessage = "Your login session has expired. Please log in again.";
+      } else if (err.response?.status === 429) {
+        errorMessage =
+          "Gemini is busy or the API limit has been reached. Please try again later.";
+      } else if (err.response?.status === 503) {
+        errorMessage =
+          err.response?.data?.error || "Gemini is temporarily unavailable.";
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.code === "ECONNABORTED") {
+        errorMessage = "The AI request timed out. Please try again.";
+      } else if (err.message === "AI returned an empty answer.") {
+        errorMessage = "The AI returned an empty answer. Please try again.";
+      }
+
+      setError(errorMessage);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
   };
 
   const clearChat = () => {
-    if (loading) return;
+    if (loadingRef.current) return;
 
     setMessages([INITIAL_MESSAGE]);
     setInput("");
@@ -106,6 +132,7 @@ export default function AIAssistant() {
             <h1 className="text-xl font-bold md:text-2xl">
               🤖 AI Health Assistant
             </h1>
+
             <p className="mt-1 text-sm text-blue-100">
               Powered by Google Gemini
             </p>
@@ -121,7 +148,7 @@ export default function AIAssistant() {
           </button>
         </div>
 
-        {/* Chat messages */}
+        {/* Chat Messages */}
         <div className="h-[55vh] min-h-[350px] space-y-5 overflow-y-auto bg-slate-50 p-5">
           {messages.map((message, index) => {
             const isUser = message.role === "user";
@@ -141,6 +168,7 @@ export default function AIAssistant() {
                   <p className="mb-1 text-xs font-semibold opacity-70">
                     {isUser ? "You" : "AI Assistant"}
                   </p>
+
                   {message.text}
                 </div>
               </div>
@@ -149,15 +177,15 @@ export default function AIAssistant() {
 
           {loading && (
             <div className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm text-slate-500 shadow-sm">
-              🤖 Generating your answer...
-              <p className="mt-1 text-xs">This may take a few seconds.</p>
+              🤖 AI is generating your answer...
+              <p className="mt-1 text-xs">Please wait a few seconds.</p>
             </div>
           )}
 
           <div ref={bottomRef} />
         </div>
 
-        {/* Suggested questions */}
+        {/* Suggested Questions */}
         {messages.length === 1 && (
           <div className="border-t border-slate-200 bg-white px-5 py-4">
             <p className="mb-3 text-sm font-semibold text-slate-700">
@@ -190,7 +218,7 @@ export default function AIAssistant() {
           </div>
         )}
 
-        {/* Input */}
+        {/* Message Input */}
         <form
           onSubmit={handleSubmit}
           className="border-t border-slate-200 bg-white p-5"
@@ -204,7 +232,11 @@ export default function AIAssistant() {
               maxLength={4000}
               disabled={loading}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  !e.nativeEvent.isComposing
+                ) {
                   e.preventDefault();
                   sendMessage();
                 }
